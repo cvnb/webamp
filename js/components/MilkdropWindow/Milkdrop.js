@@ -18,6 +18,13 @@ class Milkdrop extends React.Component {
   }
 
   async componentDidMount() {
+    this._initializeIfNeeded();
+  }
+
+  async _initializeIfNeeded() {
+    if (this.visualizer || !this.props.butterchurn || !this.props.presets) {
+      return;
+    }
     this.visualizer = this.props.butterchurn.createVisualizer(
       this.props.analyser.context,
       this._canvasNode,
@@ -30,18 +37,8 @@ class Milkdrop extends React.Component {
       }
     );
     this.visualizer.connectAudio(this.props.analyser);
-    this.presetCycle = !this.props.initialPreset;
-    if (this.props.initialPreset) {
-      const presetIndices = this.props.presets.addPresets(
-        this.props.initialPreset
-      );
-      this.selectPreset(
-        await this.props.presets.selectIndex(presetIndices[0]),
-        0
-      );
-    } else {
-      this.selectPreset(this.props.presets.getCurrent(), 0);
-    }
+    this.presetCycle = true;
+    this.selectPreset(this.props.presets.getCurrent(), 0);
 
     // Kick off the animation loop
     const loop = () => {
@@ -66,6 +63,7 @@ class Milkdrop extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
+    this._initializeIfNeeded();
     if (
       this.props.width !== prevProps.width ||
       this.props.height !== prevProps.height
@@ -254,7 +252,8 @@ class Milkdrop extends React.Component {
 
 const mapStateToProps = state => ({
   trackTitle: Selectors.getCurrentTrackDisplayName(state),
-  presets: Selectors.getPresets(state)
+  presets: Selectors.getPresets(state),
+  butterchurn: Selectors.getButterchurn(state)
 });
 
 export default connect(mapStateToProps)(Milkdrop);
